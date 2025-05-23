@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Parking System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            position: relative;
+        }
+        header {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 1em 0;
+            position: relative;
+        }
+        .menu-button {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            cursor: pointer;
+            background-color: #555;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease;
+        }
+        .menu-button:hover {
+            background-color: #666;
+        }
+        .menu-button:after {
+            content: '⋮'; /* Unicode for vertical ellipsis */
+            color: white;
+            font-size: 24px;
+        }
+        .menu {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            width: 200px;
+            background-color: #333;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        .menu.show {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .menu a {
+            color: white;
+            text-decoration: none;
+            padding: 12px 16px;
+            display: block;
+            text-align: left;
+            border-bottom: 1px solid #444;
+            transition: background-color 0.3s ease;
+        }
+        .menu a:last-child {
+            border-bottom: none;
+        }
+        .menu a:hover {
+            background-color: #555;
+        }
+        main {
+            padding: 20px;
+        }
+        section {
+            margin-bottom: 20px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        select, button, input {
+            margin-top: 10px;
+        }
+        #slotsContainer {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .slot {
+            width: 100px;
+            height: 100px;
+            margin: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: white;
+            border-radius: 5px;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+        .slot.empty {
+            background-color: #4CAF50;
+        }
+        .slot.occupied {
+            background-color: #F44336;
+        }
+        .slot:hover {
+            transform: scale(1.05);
+        }
+        #auth button, #auth a {
+            margin: 5px;
+        }
+        .hidden {
+            display: none;
+        }
+        .balance-container {
+            margin-top: 20px;
+        }
+        .balance {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .recharge-form input, .recharge-form button {
+            margin-top: 10px;
+        }
+        #bookSlotBtn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        #bookSlotBtn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Smart Parking System</h1>
+        <button class="menu-button"></button>
+        <div id="menu" class="menu">
+            <a href="#" id="menuSignUp">Sign Up</a>
+            <a href="#" id="menuLogin">Login</a>
+            <a href="#" id="menuShowSlots">Show Slots</a>
+            <a href="#" id="menuBookSlot">Book Slot</a>
+            <a href="#" id="menuShowBalance">Show Balance</a>
+            <a href="#" id="menuLogout">Logout</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- Authentication Section -->
+        <section id="auth">
+            <h2>Welcome</h2>
+            <button id="signupBtn">Sign Up</button>
+            <button id="loginBtn">Login</button>
+        </section>
+
+        <!-- Sign Up Section -->
+        <section id="signup" class="hidden">
+            <h2>Sign Up</h2>
+            <form id="signupForm">
+                <label for="signupUsername">Username:</label>
+                <input type="text" id="signupUsername" name="username" required>
+                <label for="signupPassword">Password:</label>
+                <input type="password" id="signupPassword" name="password" required>
+                <label for="signupEmail">Email:</label>
+                <input type="email" id="signupEmail" name="email" required>
+                <label for="signupPhone">Phone:</label>
+                <input type="tel" id="signupPhone" name="phone" required>
+                <button type="submit">Sign Up</button>
+            </form>
+            <p>Already have an account? <a href="#" id="goToLogin">Login here</a></p>
+        </section>
+
+        <!-- Login Section -->
+        <section id="login" class="hidden">
+            <h2>Login</h2>
+            <form id="loginForm">
+                <label for="loginUsername">Username:</label>
+                <input type="text" id="loginUsername" name="username" required>
+                <label for="loginPassword">Password:</label>
+                <input type="password" id="loginPassword" name="password" required>
+                <button type="submit">Login</button>
+            </form>
+            <p>Don't have an account? <a href="#" id="goToSignup">Sign up here</a></p>
+        </section>
+
+        <!-- Show Slots Section -->
+        <section id="showSlots" class="hidden">
+            <h2>Available Parking Slots</h2>
+            <div id="slotsContainer">
+                <!-- Slots will be displayed here by JavaScript -->
+            </div>
+            <button id="bookSlotBtn">Book My Slot</button>
+        </section>
+
+        <!-- Booking Slot Section -->
+        <section id="booking" class="hidden">
+            <h2>Book a Parking Slot</h2>
+            <form id="bookingForm">
+                <label for="slot">Select Slot:</label>
+                <select id="slot" name="slot">
+                    <!-- Slots will be populated by JavaScript -->
+                </select>
+                <label for="duration">Select Duration:</label>
+                <select id="duration" name="duration">
+                    <option value="30" data-cost="50">30 minutes - ₹50</option>
+                    <option value="180" data-cost="100">3 hours - ₹100</option>
+                    <option value="360" data-cost="200">6 hours - ₹200</option>
+                    <option value="600" data-cost="500">10 hours - ₹500</option>
+                </select>
+                <button type="submit">Book Slot</button>
+            </form>
+            <button id="showBalanceBtn">Show Balance</button>
+            <div id="balanceContainer" class="hidden balance-container">
+                <div class="balance" id="balance">Balance: ₹0.00</div>
+                <form id="rechargeForm" class="recharge-form">
+                    <label for="rechargeAmount">Recharge Amount:</label>
+                    <input type="number" id="rechargeAmount" name="amount" min="1" required>
+                    <button type="submit">Recharge</button>
+                </form>
+            </div>
+            <button id="logoutBtn">Logout</button>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slots = ['A1', 'A2', 'A3']; // Only 3 slots
+            const slotSelect = document.getElementById('slot');
+            const slotsContainer = document.getElementById('slotsContainer');
+            const bookingForm = document.getElementById('bookingForm');
+            const signupForm = document.getElementById('signupForm');
+            const loginForm = document.getElementById('loginForm');
+            const menuButton = document.querySelector('.menu-button');
+            const menu = document.getElementById('menu');
+            const showBalanceBtn = document.getElementById('showBalanceBtn');
+            const balanceContainer = document.getElementById('balanceContainer');
+            const balanceElement = document.getElementById('balance');
+            const rechargeForm = document.getElementById('rechargeForm');
+            const rechargeAmountInput = document.getElementById('rechargeAmount');
+            const bookSlotBtn = document.getElementById('bookSlotBtn');
+
+            // Show section based on id
+            function showSection(id) {
+                document.querySelectorAll('main > section').forEach(section => {
+                    section.classList.add('hidden');
+                });
+                document.getElementById(id).classList.remove('hidden');
+            }
+
+            // Toggle menu visibility
+            menuButton.addEventListener('click', () => {
+                menu.classList.toggle('show');
+            });
+
+            // Event listeners for menu items
+            document.getElementById('menuSignUp').addEventListener('click', (event) => {
+                event.preventDefault();
+                showSection('signup');
+                menu.classList.remove('show');
+            });
+
+            document.getElementById('menuLogin').addEventListener('click', (event) => {
+                event.preventDefault();
+                showSection('login');
+                menu.classList.remove('show');
+            });
+
+            document.getElementById('menuShowSlots').addEventListener('click', (event) => {
+                event.preventDefault();
+                if (isUserLoggedIn()) {
+                    showSection('showSlots');
+                    initializeSlots();
+                    menu.classList.remove('show');
+                } else {
+                    alert('Please login to view slots.');
+                }
+            });
+
+            document.getElementById('menuBookSlot').addEventListener('click', (event) => {
+                event.preventDefault();
+                if (isUserLoggedIn()) {
+                    showSection('booking');
+                    menu.classList.remove('show');
+                } else {
+                    alert('Please login to book a slot.');
+                }
+            });
+
+            document.getElementById('menuShowBalance').addEventListener('click', (event) => {
+                event.preventDefault();
+                if (isUserLoggedIn()) {
+                    showSection('booking');
+                    balanceContainer.classList.remove('hidden');
+                    updateBalance();
+                    menu.classList.remove('show');
+                } else {
+                    alert('Please login to view balance.');
+                }
+            });
+
+            document.getElementById('menuLogout').addEventListener('click', (event) => {
+                event.preventDefault();
+                logout();
+                menu.classList.remove('show');
+            });
+
+            // Check if user is logged in
+            function isUserLoggedIn() {
+                return localStorage.getItem('username') && localStorage.getItem('password');
+            }
+
+            // Show the auth section
+            function showAuth() {
+                showSection('auth');
+            }
+
+            // Show sign-up section
+            document.getElementById('signupBtn').addEventListener('click', () => {
+                showSection('signup');
+            });
+
+            // Show login section
+            document.getElementById('loginBtn').addEventListener('click', () => {
+                showSection('login');
+            });
+
+            // Go to login page from sign-up
+            document.getElementById('goToLogin').addEventListener('click', () => {
+                showSection('login');
+            });
+
+            // Go to sign-up page from login
+            document.getElementById('goToSignup').addEventListener('click', () => {
+                showSection('signup');
+            });
+
+            // Handle sign-up form submission
+            signupForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const username = document.getElementById('signupUsername').value;
+                const password = document.getElementById('signupPassword').value;
+                const email = document.getElementById('signupEmail').value;
+                const phone = document.getElementById('signupPhone').value;
+                localStorage.setItem('username', username);
+                localStorage.setItem('password', password);
+                localStorage.setItem('email', email);
+                localStorage.setItem('phone', phone);
+                localStorage.setItem('balance', 0); // Initialize balance
+                alert('Sign Up Successful!');
+                showSection('showSlots');
+                initializeSlots();
+                updateBalance();
+            });
+
+            // Handle login form submission
+            loginForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const username = document.getElementById('loginUsername').value;
+                const password = document.getElementById('loginPassword').value;
+
+                if (username === localStorage.getItem('username') && password === localStorage.getItem('password')) {
+                    alert('Login Successful!');
+                    showSection('showSlots');
+                    initializeSlots();
+                    updateBalance();
+                } else {
+                    alert('Invalid credentials!');
+                }
+            });
+
+            // Initialize slot options and status
+            function initializeSlots() {
+                slotSelect.innerHTML = '';
+                slotsContainer.innerHTML = ''; // Clear previous slots
+                slots.forEach(slot => {
+                    const option = document.createElement('option');
+                    option.value = slot;
+                    option.textContent = slot;
+                    slotSelect.appendChild(option);
+
+                    const slotDiv = document.createElement('div');
+                    slotDiv.className = `slot ${localStorage.getItem(slot) === 'occupied' ? 'occupied' : 'empty'}`;
+                    slotDiv.id = slot;
+                    slotDiv.textContent = slot;
+                    slotsContainer.appendChild(slotDiv);
+                });
+            }
+
+            // Handle booking form submission
+            bookingForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const selectedSlot = slotSelect.value;
+                const selectedDuration = document.getElementById('duration');
+                const duration = selectedDuration.value;
+                const cost = parseFloat(selectedDuration.selectedOptions[0].getAttribute('data-cost'));
+                const balance = parseFloat(localStorage.getItem('balance')) || 0;
+
+                if (localStorage.getItem(selectedSlot) === 'occupied') {
+                    alert(`Slot ${selectedSlot} is already occupied`);
+                } else if (balance < cost) {
+                    alert('Insufficient balance!');
+                } else {
+                    localStorage.setItem(selectedSlot, 'occupied');
+                    localStorage.setItem('balance', (balance - cost).toFixed(2));
+                    alert(`Successfully booked slot ${selectedSlot}`);
+                    updateSlots();
+                    updateBalance();
+                }
+            });
+
+            // Update slots display
+            function updateSlots() {
+                slots.forEach(slot => {
+                    const slotDiv = document.getElementById(slot);
+                    if (localStorage.getItem(slot) === 'occupied') {
+                        slotDiv.classList.remove('empty');
+                        slotDiv.classList.add('occupied');
+                    } else {
+                        slotDiv.classList.remove('occupied');
+                        slotDiv.classList.add('empty');
+                    }
+                });
+            }
+
+            // Show balance
+            showBalanceBtn.addEventListener('click', () => {
+                balanceContainer.classList.toggle('hidden');
+            });
+
+            // Update balance display
+            function updateBalance() {
+                const balance = localStorage.getItem('balance') || 0;
+                balanceElement.textContent = `Balance: ₹${parseFloat(balance).toFixed(2)}`;
+            }
+
+            // Handle recharge form submission
+            rechargeForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const amount = parseFloat(rechargeAmountInput.value);
+                if (amount > 0) {
+                    let currentBalance = parseFloat(localStorage.getItem('balance')) || 0;
+                    localStorage.setItem('balance', (currentBalance + amount).toFixed(2));
+                    updateBalance();
+                    alert('Recharge Successful!');
+                    rechargeAmountInput.value = '';
+                } else {
+                    alert('Invalid amount!');
+                }
+            });
+
+            // Handle logout
+            function logout() {
+                localStorage.removeItem('username');
+                localStorage.removeItem('password');
+                localStorage.removeItem('email');
+                localStorage.removeItem('phone');
+                localStorage.removeItem('balance');
+                slots.forEach(slot => localStorage.removeItem(slot));
+                showAuth();
+            }
+
+            // Redirect to booking slot page
+            bookSlotBtn.addEventListener('click', () => {
+                if (isUserLoggedIn()) {
+                    showSection('booking');
+                } else {
+                    alert('Please login to book a slot.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
